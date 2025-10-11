@@ -4,7 +4,7 @@ import User from "../models/userModel.js";
 import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 
-const protect = catchAsync(async (req, res, next) => {
+const protectRoute = catchAsync(async (req, res, next) => {
   // Get token (supports both Bearer header and cookies)
   let token = req.cookies?.jwt;
 
@@ -34,4 +34,4 @@ const protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-export default protect;
+export default protectRoute;
