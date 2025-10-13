@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRoute from "./routes/authRoutes.js";
 import userRoute from "./routes/userRoutes.js";
 import postRoute from "./routes/postRoutes.js";
+import notificationRoute from "./routes/notificationRoutes.js";
 
 import { globalErrorHandler } from "./middleware/globalErrorHandler.js";
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute);
+app.use("/api/notifications", notificationRoute);
 
 app.use(globalErrorHandler);
 
