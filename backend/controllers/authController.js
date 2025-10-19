@@ -20,16 +20,16 @@ const generateTokenAndSetCookie = (res, userId) => {
 
 // Signup
 export const signup = catchAsync(async (req, res, next) => {
-  const { name, username, email, password } = req.body;
+  const { fullName, username, email, password } = req.body;
 
-  if (!name || !username || !email || !password)
+  if (!fullName || !username || !email || !password)
     return next(new AppError("All fields are required", 400));
 
   const existingUser = await User.findOne({ $or: [{ email }, { username }] });
   if (existingUser)
     return next(new AppError("Email or username already exists", 400));
 
-  const user = await User.create({ name, username, email, password });
+  const user = await User.create({ fullName, username, email, password });
 
   generateTokenAndSetCookie(res, user._id);
 
@@ -81,10 +81,10 @@ export const getMe = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found.", 404));
   }
 
-  res.status(200).json({
-    status: "success",
-    data: {
-      user,
-    },
-  });
+  // res.status(200).json({
+  //   status: "success",
+  //   user,
+  // });
+
+  res.status(200).json(user);
 });
