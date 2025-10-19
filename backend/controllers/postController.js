@@ -38,11 +38,7 @@ export const getAllPosts = catchAsync(async (req, res) => {
     .sort({ createdAt: -1 })
     .populate("comments.user", "username avatar");
 
-  res.status(200).json({
-    status: "success",
-    results: posts.length,
-    posts,
-  });
+  res.status(200).json(posts);
 });
 
 // Delete post
