@@ -13,11 +13,12 @@ export const getNotifications = catchAsync(async (req, res, next) => {
 
   await Notification.updateMany({ recipient: userId }, { read: true });
 
-  res.status(200).json({
-    status: "success",
-    results: notifications.length,
-    notifications,
-  });
+  // res.status(200).json({
+  //   status: "success",
+  //   results: notifications.length,
+  //   notifications,
+  // });
+  res.status(200).json(notifications);
 });
 
 export const deleteNotifications = catchAsync(async (req, res, next) => {

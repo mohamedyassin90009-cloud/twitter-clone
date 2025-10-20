@@ -10,7 +10,6 @@ const RightPanel = () => {
     queryKey: ["suggestedUsers"],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/users/suggested");
-      console.log("Users:", data);
       return data.data;
     },
   });

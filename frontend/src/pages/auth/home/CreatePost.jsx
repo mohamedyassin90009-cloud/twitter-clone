@@ -32,6 +32,15 @@ const CreatePost = () => {
       toast.success("Post created successfully");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
+    onError: (err) => {
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Something went wrong";
+
+      console.error("Post creation failed:", message);
+    },
   });
 
   const handleSubmit = (e) => {
@@ -99,7 +108,11 @@ const CreatePost = () => {
             {isPending ? "Posting..." : "Post"}
           </button>
         </div>
-        {isError && <div className="text-red-500">{error.message}</div>}
+        {isError && (
+          <div className="text-red-500">
+            {error.response?.data?.message || "Failed to create post"}
+          </div>
+        )}
       </form>
     </div>
   );

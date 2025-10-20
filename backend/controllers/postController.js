@@ -5,7 +5,7 @@ import catchAsync from "../util/catchAsync.js";
 import cloudinary from "../../config/cloudinary.js";
 import Notification from "../models/notificationModel.js";
 
-export const createPost = catchAsync(async (req, res) => {
+export const createPost = catchAsync(async (req, res, next) => {
   const { text } = req.body;
   let { img } = req.body;
   const userId = req.user._id.toString();
@@ -33,7 +33,7 @@ export const createPost = catchAsync(async (req, res) => {
 });
 
 // Get All post
-export const getAllPosts = catchAsync(async (req, res) => {
+export const getAllPosts = catchAsync(async (req, res, next) => {
   const posts = await Post.find()
     .populate("user", "username avatar")
     .sort({ createdAt: -1 })
