@@ -25,7 +25,7 @@ const Posts = ({ feedType }) => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ["post", feedType],
+    queryKey: ["posts", feedType],
     queryFn: async () => {
       const { data } = await axiosInstance.get(POST_ENDPOINT);
       return data;

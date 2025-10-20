@@ -12,7 +12,7 @@ const postSchema = new mongoose.Schema(
       trim: true,
       maxlength: 280,
     },
-    image: {
+    img: {
       type: String, // Cloudinary URL (optional)
     },
     likes: [

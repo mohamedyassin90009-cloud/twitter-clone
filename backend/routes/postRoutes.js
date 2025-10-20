@@ -10,7 +10,6 @@ import {
   getFollowingPosts,
   getUserPosts,
 } from "../controllers/postController.js";
-import catchAsync from "../util/catchAsync.js";
 
 const router = express.Router();
 

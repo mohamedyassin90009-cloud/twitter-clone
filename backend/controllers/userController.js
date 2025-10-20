@@ -56,7 +56,10 @@ export const followUnfollowUser = catchAsync(async (req, res, next) => {
       message: `${currentUser.username} started following you.`,
     });
 
-    await Promise.all([currentUser.save(), userToFollow.save()]);
+    await Promise.all([
+      currentUser.save({ validateBeforeSave: false }),
+      userToFollow.save({ validateBeforeSave: false }),
+    ]);
 
     return res.status(200).json({
       status: "success",

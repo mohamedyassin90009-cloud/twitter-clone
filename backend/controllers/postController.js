@@ -5,30 +5,31 @@ import catchAsync from "../util/catchAsync.js";
 import cloudinary from "../../config/cloudinary.js";
 import Notification from "../models/notificationModel.js";
 
-export const createPost = catchAsync(async (req, res, next) => {
-  const { text, image } = req.body;
+export const createPost = catchAsync(async (req, res) => {
+  const { text } = req.body;
+  let { img } = req.body;
+  const userId = req.user._id.toString();
 
-  if (!text && !image)
-    return next(new AppError("Post must contain text or image.", 400));
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
 
-  let imageUrl;
-  if (image) {
-    const uploaded = await cloudinary.uploader.upload(image, {
-      folder: "twitter-clone/posts",
-    });
-    imageUrl = uploaded.secure_url;
+  if (!text && !img) {
+    return next(new AppError("Post must have text or image", 400));
   }
 
-  const newPost = await Post.create({
-    user: req.user._id,
+  if (img) {
+    const uploadedResponse = await cloudinary.uploader.upload(img);
+    img = uploadedResponse.secure_url;
+  }
+
+  const newPost = new Post({
+    user: userId,
     text,
-    image: imageUrl,
+    img,
   });
 
-  res.status(201).json({
-    status: "success",
-    post: newPost,
-  });
+  await newPost.save();
+  res.status(201).json(newPost);
 });
 
 // Get All post
@@ -94,102 +95,105 @@ export const addComment = catchAsync(async (req, res, next) => {
 });
 
 // likeUnlike
-export const likeUnlikePost = catchAsync(async (req, res, next) => {
-  const postId = req.params.id;
-  const userId = req.user._id;
-
-  // 1️⃣ Find post
-  const post = await Post.findById(postId);
-  if (!post) return next(new AppError("Post not found.", 404));
-
-  // 2️⃣ Find user
-  const user = await User.findById(userId);
-  if (!user) return next(new AppError("User not found.", 404));
-
-  // 3️⃣ Check if already liked
-  const alreadyLiked = user.likedPosts.includes(postId);
-
-  if (alreadyLiked) {
-    // ✅ Unlike: remove from both user and post
-    user.likedPosts = user.likedPosts.filter(
-      (id) => id.toString() !== postId.toString()
-    );
-    post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
-  } else {
-    // ✅ Like: add to both user and post
-    user.likedPosts.push(postId);
-    post.likes.push(userId);
-
-    console.log("liked post", user.likedPosts);
-
-    // Notification for post owner
-    if (post.user.toString() !== userId.toString()) {
-      await Notification.create({
-        recipient: post.user,
-        sender: userId,
-        type: "like",
-        post: post._id,
-      });
-    }
-  }
-
-  await user.save();
-  await post.save();
-
-  res.status(200).json({
-    status: "success",
-    message: alreadyLiked ? "Post unliked" : "Post liked",
-    liked: !alreadyLiked,
-    likesCount: post.likes.length,
-  });
-});
 // export const likeUnlikePost = catchAsync(async (req, res, next) => {
 //   const postId = req.params.id;
 //   const userId = req.user._id;
 
+//   // 1️⃣ Find post
 //   const post = await Post.findById(postId);
 //   if (!post) return next(new AppError("Post not found.", 404));
 
+//   // 2️⃣ Find user
 //   const user = await User.findById(userId);
 //   if (!user) return next(new AppError("User not found.", 404));
 
-//   // Check if the user already liked the post
-//   const alreadyLiked = post.likes.includes(userId);
+//   // 3️⃣ Check if already liked
+//   const alreadyLiked = user.likedPosts.includes(postId);
 
 //   if (alreadyLiked) {
-//     // Unlike: remove user ID from likes array
-//     post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
+//     // ✅ Unlike: remove from both user and post
 //     user.likedPosts = user.likedPosts.filter(
-//       (id) => id.toString() !== post._id.toString()
+//       (id) => id.toString() !== postId.toString()
 //     );
+//     post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
 //   } else {
-//     // Like: add user ID to likes array
+//     // ✅ Like: add to both user and post
+//     user.likedPosts.push(postId);
 //     post.likes.push(userId);
-//     user.likedPosts.push(post._id);
-//     // console.log(likedPosts);
 
-//     // ✅ Add notification for post owner if not liking own post
+//     console.log("liked post", user.likedPosts);
 
+//     // Notification for post owner
 //     if (post.user.toString() !== userId.toString()) {
 //       await Notification.create({
-//         // user: post.user, // post owner
 //         recipient: post.user,
-//         sender: userId, // liker
+//         sender: userId,
 //         type: "like",
 //         post: post._id,
 //       });
 //     }
 //   }
 
+//   await user.save();
 //   await post.save();
 
 //   res.status(200).json({
 //     status: "success",
-//     message: alreadyLiked ? "Post unliked." : "Post liked.",
-//     likesCount: post.likes.length,
+//     message: alreadyLiked ? "Post unliked" : "Post liked",
 //     liked: !alreadyLiked,
+//     likesCount: post.likes.length,
 //   });
 // });
+
+//
+
+export const likeUnlikePost = catchAsync(async (req, res, next) => {
+  const postId = req.params.id;
+  const userId = req.user._id;
+
+  const post = await Post.findById(postId);
+  if (!post) return next(new AppError("Post not found.", 404));
+
+  const user = await User.findById(userId);
+  if (!user) return next(new AppError("User not found.", 404));
+
+  // Check if the user already liked the post
+  const alreadyLiked = post.likes.includes(userId);
+
+  if (alreadyLiked) {
+    // Unlike: remove user ID from likes array
+    post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
+    user.likedPosts = user.likedPosts.filter(
+      (id) => id.toString() !== post._id.toString()
+    );
+  } else {
+    // Like: add user ID to likes array
+    post.likes.push(userId);
+    user.likedPosts.push(post._id);
+    // console.log(likedPosts);
+
+    // ✅ Add notification for post owner if not liking own post
+
+    if (post.user.toString() !== userId.toString()) {
+      await Notification.create({
+        // user: post.user, // post owner
+        recipient: post.user,
+        sender: userId, // liker
+        type: "like",
+        post: post._id,
+      });
+    }
+  }
+
+  await post.save();
+
+  res.status(200).json({
+    status: "success",
+    message: alreadyLiked ? "Post unliked." : "Post liked.",
+    likesCount: post.likes.length,
+    liked: !alreadyLiked,
+  });
+});
 
 export const getLikedPosts = catchAsync(async (req, res, next) => {
   // 1️⃣ Get current user

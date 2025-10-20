@@ -3,8 +3,8 @@ import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import axiosInstance from "../../../api/axios";
-import toast from "react-hot-toast";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -18,20 +18,19 @@ const CreatePost = () => {
     mutate: createPost,
     isPending,
     isError,
+    error,
   } = useMutation({
     mutationFn: async ({ text, img }) => {
-      try {
-        const { data } = await axiosInstance.post("/posts/", { text, img });
-        return data;
-      } catch (err) {
-        throw new Error(err);
-      }
+      const { data } = await axiosInstance.post("/posts/", { text, img });
+      console.log(data);
+      return data;
     },
+
     onSuccess: () => {
       setText("");
       setImg(null);
       toast.success("Post created successfully");
-      queryClient.invalidateQueries(["posts"]);
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 
@@ -100,7 +99,7 @@ const CreatePost = () => {
             {isPending ? "Posting..." : "Post"}
           </button>
         </div>
-        {isError && <div className="text-red-500"></div>}
+        {isError && <div className="text-red-500">{error.message}</div>}
       </form>
     </div>
   );

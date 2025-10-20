@@ -11,11 +11,14 @@ import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
 
 const Post = ({ post }) => {
-  const [comment, setComment] = useState("");
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   const queryClient = useQueryClient();
 
-  const { mutate: deletePost, isPending } = useMutation({
+  const [likes, setLikes] = useState(post.likes);
+  const [liked, setLiked] = useState(post.likes.includes(authUser?._id));
+  const [comment, setComment] = useState("");
+
+  const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       try {
         const { data } = await axiosInstance.delete(`/posts/${post._id}`);
@@ -26,13 +29,39 @@ const Post = ({ post }) => {
     },
     onSuccess: () => {
       toast.success("Post deleted successfully");
-      queryClient.invalidateQueries(["posts"]);
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
       // invalidate the query to refectchthe data
     },
   });
 
+  const { mutate: likePost, isPending: isLiking } = useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.post(`/posts/like/${post._id}`);
+      return data;
+    },
+    onMutate: () => {
+      //Optimstic update
+      setLiked((prev) => !prev);
+      setLikes((prev) =>
+        liked
+          ? prev.filter((id) => id !== authUser._id)
+          : [...prev, authUser._id]
+      );
+    },
+    onError: (err) => {
+      // Rollback
+      setLiked((prev) => !prev);
+      setLikes((prev) =>
+        liked
+          ? [...prev, authUser._id]
+          : prev.filter((id) => id !== authUser._id)
+      );
+      toast.error(err.response?.data?.message || "Failed to like post");
+    },
+  });
+
   const postOwner = post.user;
-  const isLiked = false;
+  const isLiked = post.likes.includes(authUser._id);
 
   const isMyPost = authUser._id === post.user._id;
 
@@ -48,7 +77,10 @@ const Post = ({ post }) => {
     e.preventDefault();
   };
 
-  const handleLikePost = () => {};
+  const handleLikePost = () => {
+    if (!authUser || isLiking) return;
+    likePost();
+  };
 
   return (
     <>
@@ -75,13 +107,13 @@ const Post = ({ post }) => {
             </span>
             {isMyPost && (
               <span className="flex justify-end flex-1">
-                {!isPending && (
+                {!isDeleting && (
                   <FaTrash
                     className="cursor-pointer hover:text-red-500"
                     onClick={handleDeletePost}
                   />
                 )}
-                {isPending && <LoadingSpinner size="sm" />}
+                {isDeleting && <LoadingSpinner size="sm" />}
               </span>
             )}
           </div>
@@ -160,11 +192,7 @@ const Post = ({ post }) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? (
-                        <span className="loading loading-spinner loading-md"></span>
-                      ) : (
-                        "Post"
-                      )}
+                      {isCommenting ? <LoadingSpinner size="md" /> : "Post"}
                     </button>
                   </form>
                 </div>
@@ -182,19 +210,20 @@ const Post = ({ post }) => {
                 className="flex gap-1 items-center group cursor-pointer"
                 onClick={handleLikePost}
               >
-                {!isLiked && (
+                {isLiking && <LoadingSpinner size="sm" />}
+                {!liked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />
                 )}
-                {isLiked && (
+                {liked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />
                 )}
 
                 <span
                   className={`text-sm text-slate-500 group-hover:text-pink-500 ${
-                    isLiked ? "text-pink-500" : ""
+                    isLiked ? "text-pink-500" : "text-slate-500"
                   }`}
                 >
-                  {post.likes.length}
+                  {likes.length}
                 </span>
               </div>
             </div>

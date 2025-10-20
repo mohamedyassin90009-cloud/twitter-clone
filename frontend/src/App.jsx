@@ -6,7 +6,7 @@ import SideBar from "./components/common/SideBar";
 import RightPanel from "./components/common/RightPanel";
 import NotificationPage from "./pages/notification/NotificationPage";
 import ProfilePage from "./pages/profile/ProfilePage";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "./api/axios";
 import LoadingSpinner from "./components/common/LoadingSpinner";
@@ -17,7 +17,6 @@ function App() {
     queryFn: async () => {
       try {
         const { data } = await axiosInstance.get("/auth/me");
-        console.log(data);
         return data;
       } catch (err) {
         const message =
