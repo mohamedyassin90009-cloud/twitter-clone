@@ -87,11 +87,15 @@ export const addComment = catchAsync(async (req, res, next) => {
   post.comments.push(comment);
   await post.save();
 
-  res.status(201).json({
-    status: "success",
-    message: "Comment added successfully.",
-    comments: post.comments,
-  });
+  // res.status(201).json({
+  //   status: "success",
+  //   message: "Comment added successfully.",
+  //   comments: post.comments,
+  // });
+
+  // populate only the newly added comment
+
+  res.status(201).json(post);
 });
 
 // likeUnlike
@@ -204,8 +208,6 @@ export const getLikedPosts = catchAsync(async (req, res, next) => {
       select: "username avatar name",
     },
   });
-
-  console.log(user);
 
   if (!user) return next(new AppError("User not found.", 404));
 
