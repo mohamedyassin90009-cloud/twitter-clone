@@ -21,22 +21,26 @@ export const followUnfollowUser = catchAsync(async (req, res, next) => {
   const currentUser = await User.findById(req.user._id);
 
   if (!userToFollow) return next(new AppError("User not found", 404));
-
   if (userToFollow._id.equals(req.user._id))
     return next(new AppError("You cannot follow yourself.", 400));
 
-  const isFollowing = currentUser.following.includes(userToFollow._id);
+  const isFollowing = currentUser.following.some(
+    (userId) => userId.toString() === userToFollow._id.toString()
+  );
 
   if (isFollowing) {
-    // UNFOLLOW LOGIC
+    // ✅ UNFOLLOW
     currentUser.following = currentUser.following.filter(
-      (id) => !id.equals(userToFollow._id)
+      (userId) => userId.toString() !== userToFollow._id.toString()
     );
     userToFollow.followers = userToFollow.followers.filter(
-      (id) => !id.equals(currentUser._id)
+      (followerId) => followerId.toString() !== currentUser._id.toString()
     );
 
-    await Promise.all([currentUser.save(), userToFollow.save()]);
+    await Promise.all([
+      currentUser.save({ validateBeforeSave: false }),
+      userToFollow.save({ validateBeforeSave: false }),
+    ]);
 
     return res.status(200).json({
       status: "success",
@@ -44,11 +48,10 @@ export const followUnfollowUser = catchAsync(async (req, res, next) => {
       following: false,
     });
   } else {
-    // FOLLOW LOGIC
+    // ✅ FOLLOW
     currentUser.following.push(userToFollow._id);
     userToFollow.followers.push(currentUser._id);
 
-    // CREATE NOTIFICATION
     await Notification.create({
       sender: currentUser._id,
       recipient: userToFollow._id,
@@ -92,55 +95,47 @@ export const getSuggestedUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-export const updateMe = catchAsync(async (req, res, next) => {
-  const { name, userName, bio, email, profileImage, coverImage } = req.body;
+export const updateUser = catchAsync(async (req, res) => {
+  const { fullName, email, username, bio, link } = req.body;
+  let { profileImg, coverImg } = req.body;
 
-  const user = await User.findById(req.user.id);
-  if (!user) return next(new AppError("User not found.", 404));
+  const userId = req.user._id;
 
-  // ✅ Basic info updates
-  if (name) user.name = name;
-  if (bio) user.bio = bio;
-  if (email) user.email = email;
-  if (userName) user.username = userName;
+  let user = await User.findById(userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
 
-  // ✅ Upload new profile image if provided
-  if (profileImage) {
-    if (user.profileImagePublicId) {
-      await cloudinary.uploader.destroy(user.profileImagePublicId);
+  if (profileImg) {
+    if (user.profileImg) {
+      // https://res.cloudinary.com/dyfqon1v6/image/upload/v1712997552/zmxorcxexpdbh8r0bkjb.png
+      await cloudinary.uploader.destroy(
+        user.profileImg.split("/").pop().split(".")[0]
+      );
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profileImage, {
-      folder: "twitter-clone/users/profile-images",
-      transformation: [{ width: 500, height: 500, crop: "limit" }],
-    });
-
-    user.profileImage = uploadResponse.secure_url;
-    user.profileImagePublicId = uploadResponse.public_id;
+    const uploadedResponse = await cloudinary.uploader.upload(profileImg);
+    profileImg = uploadedResponse.secure_url;
   }
 
-  // ✅ Upload new cover image if provided
-  if (coverImage) {
-    if (user.coverImagePublicId) {
-      await cloudinary.uploader.destroy(user.coverImagePublicId);
+  if (coverImg) {
+    if (user.coverImg) {
+      await cloudinary.uploader.destroy(
+        user.coverImg.split("/").pop().split(".")[0]
+      );
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(coverImage, {
-      folder: "twitter-clone/users/cover-images",
-      transformation: [{ width: 1500, height: 500, crop: "limit" }],
-    });
-
-    user.coverImage = uploadResponse.secure_url;
-    user.coverImagePublicId = uploadResponse.public_id;
+    const uploadedResponse = await cloudinary.uploader.upload(coverImg);
+    coverImg = uploadedResponse.secure_url;
   }
 
-  await user.save();
+  user.fullName = fullName || user.fullName;
+  user.email = email || user.email;
+  user.username = username || user.username;
+  user.bio = bio || user.bio;
+  user.link = link || user.link;
+  user.profileImg = profileImg || user.profileImg;
+  user.coverImg = coverImg || user.coverImg;
 
-  res.status(200).json({
-    status: "success",
-    message: "Profile updated successfully.",
-    data: {
-      user,
-    },
-  });
+  user = await user.save();
+
+  return res.status(200).json(user);
 });

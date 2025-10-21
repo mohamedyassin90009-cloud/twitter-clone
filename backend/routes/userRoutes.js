@@ -4,7 +4,7 @@ import {
   getUserProfile,
   followUnfollowUser,
   getSuggestedUsers,
-  updateMe,
+  updateUser,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -12,6 +12,6 @@ const router = express.Router();
 router.get("/profile/:username", getUserProfile);
 router.get("/suggested", protectRoute, getSuggestedUsers);
 router.post("/follow/:id", protectRoute, followUnfollowUser);
-router.patch("/updateMe", protectRoute, updateMe);
+router.patch("/updateMe", protectRoute, updateUser);
 
 export default router;

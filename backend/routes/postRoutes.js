@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.get("/", protectRoute, getAllPosts);
 
-router.get("/liked/", protectRoute, getLikedPosts);
+router.get("/liked/:id", protectRoute, getLikedPosts);
 
 router.get("/user/:username", protectRoute, getUserPosts);
 

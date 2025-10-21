@@ -1,4 +1,3 @@
-// models/notification.model.js
 import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema(
@@ -6,24 +5,20 @@ const notificationSchema = new mongoose.Schema(
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // Who receives the notification
+      required: true,
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // Who triggered the notification
+      required: true,
     },
     type: {
       type: String,
-      enum: ["follow", "like", "comment", "mention"], // Notification types
+      enum: ["follow", "like", "comment", "mention"],
       required: true,
     },
-    // post: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Post", // Optional, only for like/comment/mention notifications
-    // },
     message: {
-      type: String, // Optional custom message for flexibility
+      type: String,
     },
     read: {
       type: Boolean,
@@ -31,7 +26,7 @@ const notificationSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // adds createdAt and updatedAt automatically
+    timestamps: true,
   }
 );
 

@@ -87,69 +87,8 @@ export const addComment = catchAsync(async (req, res, next) => {
   post.comments.push(comment);
   await post.save();
 
-  // res.status(201).json({
-  //   status: "success",
-  //   message: "Comment added successfully.",
-  //   comments: post.comments,
-  // });
-
-  // populate only the newly added comment
-
   res.status(201).json(post);
 });
-
-// likeUnlike
-// export const likeUnlikePost = catchAsync(async (req, res, next) => {
-//   const postId = req.params.id;
-//   const userId = req.user._id;
-
-//   // 1️⃣ Find post
-//   const post = await Post.findById(postId);
-//   if (!post) return next(new AppError("Post not found.", 404));
-
-//   // 2️⃣ Find user
-//   const user = await User.findById(userId);
-//   if (!user) return next(new AppError("User not found.", 404));
-
-//   // 3️⃣ Check if already liked
-//   const alreadyLiked = user.likedPosts.includes(postId);
-
-//   if (alreadyLiked) {
-//     // ✅ Unlike: remove from both user and post
-//     user.likedPosts = user.likedPosts.filter(
-//       (id) => id.toString() !== postId.toString()
-//     );
-//     post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
-//   } else {
-//     // ✅ Like: add to both user and post
-//     user.likedPosts.push(postId);
-//     post.likes.push(userId);
-
-//     console.log("liked post", user.likedPosts);
-
-//     // Notification for post owner
-//     if (post.user.toString() !== userId.toString()) {
-//       await Notification.create({
-//         recipient: post.user,
-//         sender: userId,
-//         type: "like",
-//         post: post._id,
-//       });
-//     }
-//   }
-
-//   await user.save();
-//   await post.save();
-
-//   res.status(200).json({
-//     status: "success",
-//     message: alreadyLiked ? "Post unliked" : "Post liked",
-//     liked: !alreadyLiked,
-//     likesCount: post.likes.length,
-//   });
-// });
-
-//
 
 export const likeUnlikePost = catchAsync(async (req, res, next) => {
   const postId = req.params.id;
@@ -200,33 +139,22 @@ export const likeUnlikePost = catchAsync(async (req, res, next) => {
 });
 
 export const getLikedPosts = catchAsync(async (req, res, next) => {
-  // 1️⃣ Get current user
-  const user = await User.findById(req.user._id).populate({
-    path: "likedPosts",
-    populate: {
-      path: "user", // post author
-      select: "username avatar name",
-    },
-  });
+  const userId = req.params.id;
 
-  if (!user) return next(new AppError("User not found.", 404));
+  const user = await User.findById(userId);
+  if (!user) return next(new AppError("User not found", 404));
 
-  // 2️⃣ Map liked posts to include extra info
-  const likedPosts = user.likedPosts.map((post) => ({
-    _id: post._id,
-    text: post.text,
-    image: post.image,
-    createdAt: post.createdAt,
-    user: post.user, // populated author
-    likesCount: post.likes.length,
-    liked: post.likes.includes(req.user._id), // always true here
-  }));
+  const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
+    .populate({
+      path: "user",
+      select: "-password",
+    })
+    .populate({
+      path: "comments.user",
+      select: "-password",
+    });
 
-  res.status(200).json({
-    status: "success",
-    results: likedPosts.length,
-    likedPosts,
-  });
+  res.status(200).json(likedPosts);
 });
 
 export const getFollowingPosts = catchAsync(async (req, res, next) => {

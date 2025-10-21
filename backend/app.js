@@ -1,3 +1,4 @@
+import path from "path";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -11,6 +12,7 @@ import notificationRoute from "./routes/notificationRoutes.js";
 import { globalErrorHandler } from "./middleware/globalErrorHandler.js";
 
 const app = express();
+const __dirname = path.resolve();
 
 // Middlewares
 app.use(express.json({ limit: "5mb" }));
@@ -27,6 +29,14 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute);
 app.use("/api/notifications", notificationRoute);
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "frontend/dist")));
+
+  app.get("/{*any}", (req, res) => {
+    res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+  });
+}
 
 app.use(globalErrorHandler);
 

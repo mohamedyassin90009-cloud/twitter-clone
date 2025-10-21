@@ -81,10 +81,5 @@ export const getMe = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found.", 404));
   }
 
-  // res.status(200).json({
-  //   status: "success",
-  //   user,
-  // });
-
   res.status(200).json(user);
 });

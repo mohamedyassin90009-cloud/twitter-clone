@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
       trim: true,
     },
     username: {
@@ -30,19 +29,19 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 8,
-      select: false, // exclude password by default
+      select: false,
     },
     bio: {
       type: String,
       maxlength: 160,
       default: "",
     },
-    avatar: {
-      type: String, // Cloudinary URL
+    profileImg: {
+      type: String,
       default: "",
     },
-    coverImage: {
-      type: String, // Cloudinary URL
+    coverImg: {
+      type: String,
       default: "",
     },
     followers: [
