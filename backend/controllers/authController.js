@@ -8,7 +8,7 @@ const generateTokenAndSetCookie = (res, userId) => {
   const expiresInValue = process.env.EXPIRESIN?.trim() || "1d";
 
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: expiresInValue,
+    expiresIn: "1d",
   });
 
   // Send via cookie
