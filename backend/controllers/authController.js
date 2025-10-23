@@ -6,7 +6,7 @@ import User from "../models/userModel.js";
 // Generate JWT
 const generateTokenAndSetCookie = (res, userId) => {
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.EXPIRESIN,
+    expiresIn: "1d",
   });
 
   // Send via cookie
