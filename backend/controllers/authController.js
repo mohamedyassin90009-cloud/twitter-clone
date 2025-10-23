@@ -5,8 +5,10 @@ import User from "../models/userModel.js";
 
 // Generate JWT
 const generateTokenAndSetCookie = (res, userId) => {
+  const expiresInValue = process.env.EXPIRESIN?.trim() || "1d";
+
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.EXPIRESIN || "1d",
+    expiresIn: expiresInValue,
   });
 
   // Send via cookie
